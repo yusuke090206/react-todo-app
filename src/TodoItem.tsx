@@ -1,7 +1,7 @@
 import type { Todo } from "./types";
 import dayjs from "dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClock, faPersonDigging } from "@fortawesome/free-solid-svg-icons";
+import { faClock, faPersonDigging, faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
 import { twMerge } from "tailwind-merge";
 
 type Props = {
@@ -22,8 +22,19 @@ const formattedDate = (date: Date) => {
 const TodoItem = (props: Props) => {
   const todo = props.todo;
 
+  // 期限切れ判定（未完了かつ期限が過去の日時）
+  const isOverdue =
+    !todo.isDone && todo.deadline !== null && todo.deadline.getTime() < Date.now();
+
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-slate-300 bg-white px-4 py-2 drop-shadow">
+    <div
+      className={twMerge(
+        "flex items-center justify-between gap-3 rounded-md border p-4 transition drop-shadow",
+        isOverdue
+          ? "border-red-300 bg-red-50"
+          : "border-slate-300 bg-white",
+      )}
+    >
       <div
         className={twMerge(
           "flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1",
@@ -41,7 +52,12 @@ const TodoItem = (props: Props) => {
             icon={faPersonDigging}
             className="mr-2 shrink-0 text-slate-500"
           />
-          <span className="min-w-0 text-lg font-medium wrap-anywhere text-slate-700">
+          <span
+            className={twMerge(
+              "min-w-0 text-lg font-medium wrap-anywhere",
+              todo.isDone ? "text-slate-500 line-through" : "text-slate-700"
+            )}
+          >
             {todo.name}
           </span>
         </label>
@@ -52,9 +68,18 @@ const TodoItem = (props: Props) => {
           {num2star(todo.priority)}
         </span>
         {todo.deadline && (
-          <span className="flex items-center text-sm text-slate-500">
-            <FontAwesomeIcon icon={faClock} className="mr-0.5" />
+          <span
+            className={twMerge(
+              "flex items-center text-sm font-medium",
+              isOverdue ? "text-red-600 font-bold" : "text-slate-500",
+            )}
+          >
+            <FontAwesomeIcon
+              icon={isOverdue ? faExclamationCircle : faClock}
+              className="mr-1"
+            />
             {formattedDate(todo.deadline)}
+            {isOverdue && <span className="ml-1 text-xs">(期限切れ)</span>}
           </span>
         )}
         {todo.isDone && (

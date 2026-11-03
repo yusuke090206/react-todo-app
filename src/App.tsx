@@ -1,14 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { ChangeEvent } from "react";
 import type { Todo } from "./types";
 import { initTodos } from "./initTodos";
 import WelcomeMessage from "./WelcomeMessage";
 import TodoList from "./TodoList";
+import CalendarView from "./CalendarView"; // 後述する新規コンポーネント
 import { v4 as uuid } from "uuid";
 import { twMerge } from "tailwind-merge";
 import dayjs from "dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import {
+  faTriangleExclamation,
+  faListCheck,
+  faCalendarDays,
+  faCircleExclamation,
+} from "@fortawesome/free-solid-svg-icons";
 
 const localStorageKey = "TodoApp";
 
@@ -19,6 +25,9 @@ type StoredTodo = {
   priority: number;
   deadline: string | null;
 };
+
+export type FilterType = "all" | "active" | "completed";
+export type SortType = "createdAt" | "priority" | "deadline";
 
 const loadTodos = (): Todo[] => {
   const todoJsonStr = localStorage.getItem(localStorageKey);
@@ -48,6 +57,11 @@ const App = () => {
   const [newTodoDeadline, setNewTodoDeadline] = useState<Date | null>(null);
   const [isNameTouched, setIsNameTouched] = useState(false);
 
+  // 表示モード (list: リスト表示, calendar: カレンダー表示)
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [sortBy, setSortBy] = useState<SortType>("createdAt");
+
   const uncompletedCount = todos.filter((todo) => !todo.isDone).length;
   const completedCount = todos.length - uncompletedCount;
   const newTodoNameError = getTodoNameError(newTodoName);
@@ -57,6 +71,42 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem(localStorageKey, JSON.stringify(todos));
   }, [todos]);
+
+  // 1. 期限切れの未完了タスク（別セクションに分離）
+  const overdueTodos = useMemo(() => {
+    const now = new Date();
+    return todos.filter(
+      (todo) => !todo.isDone && todo.deadline !== null && todo.deadline < now,
+    );
+  }, [todos]);
+
+  // 2. 通常のタスク（期限切れを除く）
+  const normalTodos = useMemo(() => {
+    const now = new Date();
+    return todos.filter(
+      (todo) =>
+        todo.isDone || todo.deadline === null || todo.deadline >= now,
+    );
+  }, [todos]);
+
+  // フィルター＆ソート（通常タスクに適用）
+  const filteredAndSortedTodos = useMemo(() => {
+    return normalTodos
+      .filter((todo) => {
+        if (filter === "active") return !todo.isDone;
+        if (filter === "completed") return todo.isDone;
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "priority") return a.priority - b.priority;
+        if (sortBy === "deadline") {
+          if (!a.deadline) return 1;
+          if (!b.deadline) return -1;
+          return a.deadline.getTime() - b.deadline.getTime();
+        }
+        return 0;
+      });
+  }, [normalTodos, filter, sortBy]);
 
   const updateNewTodoName = (e: ChangeEvent<HTMLInputElement>) => {
     setNewTodoName(e.target.value);
@@ -114,35 +164,141 @@ const App = () => {
 
   return (
     <div className="mx-4 mt-10 max-w-2xl md:mx-auto">
-      <h1 className="mb-4 text-2xl font-bold">TodoApp</h1>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-bold">TodoApp</h1>
+
+        {/* リスト / カレンダー 切替ボタン */}
+        <div className="flex rounded-lg bg-slate-200 p-1">
+          <button
+            type="button"
+            onClick={() => setViewMode("list")}
+            className={twMerge(
+              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-bold transition",
+              viewMode === "list"
+                ? "bg-white text-slate-800 shadow-sm"
+                : "text-slate-600 hover:text-slate-900",
+            )}
+          >
+            <FontAwesomeIcon icon={faListCheck} />
+            リスト
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("calendar")}
+            className={twMerge(
+              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-bold transition",
+              viewMode === "calendar"
+                ? "bg-white text-slate-800 shadow-sm"
+                : "text-slate-600 hover:text-slate-900",
+            )}
+          >
+            <FontAwesomeIcon icon={faCalendarDays} />
+            カレンダー
+          </button>
+        </div>
+      </div>
+
       <div className="mb-4">
         <WelcomeMessage
-          name="寝屋川タヌキ"
+          name="ゲスト"
           uncompletedCount={uncompletedCount}
         />
       </div>
-      <TodoList todos={todos} updateIsDone={updateIsDone} remove={remove} />
 
-      <button
-        type="button"
-        onClick={removeCompletedTodos}
-        disabled={completedCount === 0}
-        className={twMerge(
-          "mt-4 cursor-pointer rounded-md px-3 py-1 font-medium",
-          "bg-rose-500 text-white hover:bg-rose-600",
-          "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-rose-500",
-        )}
-      >
-        完了済みのタスクを削除
-      </button>
+      {/* 🚨 期限切れタスクの特別セクション（存在する場合のみ表示） */}
+      {overdueTodos.length > 0 && (
+        <div className="mb-6 rounded-lg border border-red-300 bg-red-50 p-4 shadow-sm">
+          <h2 className="mb-3 flex items-center gap-2 font-bold text-red-700">
+            <FontAwesomeIcon icon={faCircleExclamation} />
+            期限切れのタスク ({overdueTodos.length}件)
+          </h2>
+          <TodoList
+            todos={overdueTodos}
+            updateIsDone={updateIsDone}
+            remove={remove}
+          />
+        </div>
+      )}
 
+      {/* 表示モードに応じたメインコンテンツ */}
+      {viewMode === "list" ? (
+        <>
+          {/* コントロールバー */}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
+            <div className="flex items-center gap-1">
+              <span className="font-bold text-slate-700">表示:</span>
+              {(
+                [
+                  { label: "すべて", value: "all" },
+                  { label: "未完了", value: "active" },
+                  { label: "完了済み", value: "completed" },
+                ] as const
+              ).map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => setFilter(item.value)}
+                  className={twMerge(
+                    "rounded-md px-2.5 py-1 font-medium transition",
+                    filter === item.value
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-slate-600 hover:bg-slate-200",
+                  )}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label htmlFor="sortSelect" className="font-bold text-slate-700">
+                並び替え:
+              </label>
+              <select
+                id="sortSelect"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortType)}
+                className="rounded-md border border-slate-300 bg-white px-2 py-1"
+              >
+                <option value="createdAt">登録順</option>
+                <option value="priority">優先度順</option>
+                <option value="deadline">期限順</option>
+              </select>
+            </div>
+          </div>
+
+          <TodoList
+            todos={filteredAndSortedTodos}
+            updateIsDone={updateIsDone}
+            remove={remove}
+          />
+
+          <button
+            type="button"
+            onClick={removeCompletedTodos}
+            disabled={completedCount === 0}
+            className={twMerge(
+              "mt-4 cursor-pointer rounded-md px-3 py-1 font-medium",
+              "bg-rose-500 text-white hover:bg-rose-600",
+              "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-rose-500",
+            )}
+          >
+            完了済みのタスクを一括削除
+          </button>
+        </>
+      ) : (
+        /* カレンダービュー */
+        <CalendarView todos={todos} updateIsDone={updateIsDone} />
+      )}
+
+      {/* タスク追加フォーム */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
           addNewTodo();
         }}
         aria-labelledby="newTodoHeading"
-        className="mt-4 space-y-2 rounded-md border border-slate-300 bg-white p-3 drop-shadow"
+        className="mt-6 space-y-2 rounded-md border border-slate-300 bg-white p-4 drop-shadow"
       >
         <h2 id="newTodoHeading" className="text-lg font-bold">
           新しいタスクの追加
@@ -190,7 +346,7 @@ const App = () => {
           <legend className="mb-1 font-bold">優先度</legend>
           <div className="flex gap-5">
             {[1, 2, 3].map((value) => (
-              <label key={value} className="flex items-center space-x-1">
+              <label key={value} className="flex items-center space-x-1 cursor-pointer">
                 <input
                   id={`priority-${value}`}
                   name="priorityGroup"
@@ -215,11 +371,11 @@ const App = () => {
             name="deadline"
             value={
               newTodoDeadline
-                ? dayjs(newTodoDeadline).format("YYYY-MM-DDTHH:mm:ss")
+                ? dayjs(newTodoDeadline).format("YYYY-MM-DDTHH:mm")
                 : ""
             }
             onChange={updateDeadline}
-            className="max-w-full min-w-0 rounded-md border border-gray-300 px-2 py-0.5"
+            className="max-w-full min-w-0 rounded-md border border-gray-300 px-2 py-1"
           />
         </div>
 
@@ -227,9 +383,9 @@ const App = () => {
           type="submit"
           disabled={isNewTodoNameInvalid}
           className={twMerge(
-            "cursor-pointer rounded-md px-3 py-1",
-            "bg-indigo-500 font-bold text-white hover:bg-indigo-600",
-            "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-indigo-500",
+            "mt-2 cursor-pointer rounded-md px-4 py-2 font-bold text-white transition",
+            "bg-indigo-600 hover:bg-indigo-700",
+            "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-indigo-600",
           )}
         >
           追加
