@@ -1,31 +1,60 @@
 # TodoApp
 
-React、TypeScript、Tailwind CSS を使用し、ローカルストレージでデータを永続化した「Todoアプリ」です。
+期限の迫ったタスクの「見落とし防止」と「スケジュール全体の直感的な把握」を両立したWeb Todoアプリケーションです。
 
-## 開発履歴
+- **公開URL (GitHub Pages)**: https://[ユーザー名].github.io/[リポジトリ名]/
 
-- 2026年11月1日：プロジェクト開始
+## 開発の背景・着想
 
-## ライセンス
+従来のシンプルなTodoリストを使っていた際、タスクの数が増えるにつれて**「どのタスクの期限が一番迫っているのかが埋もれてしまう」「今週のどの日に作業が集中しているか分かりづらい」**という課題を感じていました。
 
-MIT License
+そこで、単なるタスクのメモ帳ではなく、**「今すぐ手をつけるべきタスクが視覚的に飛び込んでくるアプリ」**を目指して本アプリを開発しました。
 
-Copyright (c) 2026 Kosen Taro
+## スクリーンショット
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+### 1. メイン画面（リスト表示）
+![メイン画面](.images/main_src.png)
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+### 2. 期限アラート（黄色警告）と期限切れタスクの自動分離（赤枠）
+![期限アラート](.images/alers.png)
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+### 3. カレンダー表示
+![カレンダー表示](.images/calender.png)
+
+### 4. 絞り込み・並び替え機能と入力バリデーション
+![フィルタとバリデーション](.images/filter.png)
+
+### 5. スマートフォン表示（レスポンシブ対応）
+![スマホ表示](.images/responsive.png)
+
+## 主な機能と工夫したポイント
+
+### 1. 期限に応じた2段階の視覚アラートと自動隔離
+* **24時間以内の黄色警告**: 期限まで24時間を切った未完了タスクは、背景と枠線が黄色（アンバー）に変化し、早めの着手を促します。
+* **期限切れタスクの上部隔離**: 期限を過ぎた未完了タスクは赤色で強調されるとともに、通常のタスクリストから自動的に切り離され、画面最上部の「期限切れのタスク」専用エリアへ移動します。これにより、期限超過を絶対に見逃さない設計にしました。
+
+### 2. リスト表示と月間カレンダー表示のワンクリック切り替え
+* 日々の細かい優先順位付けを行う「リスト表示」と、月単位の締め切り分布を俯瞰できる「カレンダー表示」をヘッダーのタブから即座に切り替えられます。
+* カレンダー上のタスクバッジをクリックすることでも、直接完了・未完了の状態を切り替えられるよう操作性を工夫しました。
+
+### 3. 柔軟なフィルタリング・ソートとリアルタイムバリデーション
+* 「すべて / 未完了 / 完了済み」の絞り込みと、「登録順 / 優先度順 / 期限順」の並び替えを組み合わせて表示できます。
+* タスク名の入力欄には文字数制限（前後空白を除き2〜32文字）のリアルタイムバリデーションを実装し、不正な入力時はエラーメッセージと視覚的フィードバックを表示します。
+
+### 4. パーソナライズとデータの自動保存
+* タイトル横の入力欄からユーザー名を自由に設定でき、時間帯に応じたあいさつメッセージへリアルタイムに反映されます。
+* 登録したタスクおよびユーザー名は `localStorage` に自動保存されるため、ブラウザを閉じたり再読み込みしたりしてもデータが保持されます。
+
+### 5. レスポンシブデザイン
+* PCのワイド画面からスマートフォンの縦長画面まで、画面幅に応じてフォームやコントロールバーが適切に折り返されるよう Tailwind CSS でレイアウトを調整しました。
+
+## 使用技術
+
+* **フロントエンド**: React, TypeScript
+* **スタイリング**: Tailwind CSS, tailwind-merge
+* **ライブラリ**: Day.js（日付計算・フォーマット）, Font Awesome, uuid
+* **ビルド・デプロイ**: Vite, GitHub Pages
+
+## 開発期間
+
+* **開発期間**: 2026.10.23 ~ 2026.11.14 (約18時間)
