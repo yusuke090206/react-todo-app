@@ -2,7 +2,7 @@
 
 期限の迫ったタスクの「見落とし防止」と「スケジュール全体の直感的な把握」を両立したWeb Todoアプリケーションです。
 
-- **公開URL (GitHub Pages)**: https://yusuke090206.github.io/react-todo-app/
+- **公開URL**: https://yusuke090206.github.io/react-todo-app/
 
 ## 開発の背景・着想
 

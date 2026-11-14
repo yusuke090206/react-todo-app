@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import type { ChangeEvent } from "react";
-import type { Todo } from "./types";
+import type { Todo, Category } from "./types";
 import { initTodos } from "./initTodos";
 import WelcomeMessage from "./WelcomeMessage";
 import TodoList from "./TodoList";
@@ -20,12 +20,21 @@ import {
 const localStorageKey = "TodoApp";
 const userNameStorageKey = "TodoApp_UserName";
 
+const CATEGORIES: Category[] = [
+  "仕事",
+  "プライベート",
+  "学習",
+  "買い物",
+  "その他",
+];
+
 type StoredTodo = {
   id: string;
   name: string;
   isDone: boolean;
   priority: number;
   deadline: string | null;
+  category?: Category;
 };
 
 export type FilterType = "all" | "active" | "completed";
@@ -41,6 +50,7 @@ const loadTodos = (): Todo[] => {
   return storedTodos.map((todo) => ({
     ...todo,
     deadline: todo.deadline === null ? null : new Date(todo.deadline),
+    category: todo.category ?? "その他",
   }));
 };
 
@@ -60,10 +70,12 @@ const App = () => {
   const [newTodoName, setNewTodoName] = useState("");
   const [newTodoPriority, setNewTodoPriority] = useState(3);
   const [newTodoDeadline, setNewTodoDeadline] = useState<Date | null>(null);
+  const [newTodoCategory, setNewTodoCategory] = useState<Category>("その他");
   const [isNameTouched, setIsNameTouched] = useState(false);
 
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [filter, setFilter] = useState<FilterType>("all");
+  const [categoryFilter, setCategoryFilter] = useState<Category | "all">("all");
   const [sortBy, setSortBy] = useState<SortType>("createdAt");
 
   const uncompletedCount = todos.filter((todo) => !todo.isDone).length;
@@ -98,8 +110,11 @@ const App = () => {
   const filteredAndSortedTodos = useMemo(() => {
     return normalTodos
       .filter((todo) => {
-        if (filter === "active") return !todo.isDone;
-        if (filter === "completed") return todo.isDone;
+        if (filter === "active" && todo.isDone) return false;
+        if (filter === "completed" && !todo.isDone) return false;
+        if (categoryFilter !== "all" && todo.category !== categoryFilter) {
+          return false;
+        }
         return true;
       })
       .sort((a, b) => {
@@ -111,7 +126,7 @@ const App = () => {
         }
         return 0;
       });
-  }, [normalTodos, filter, sortBy]);
+  }, [normalTodos, filter, categoryFilter, sortBy]);
 
   const updateNewTodoName = (e: ChangeEvent<HTMLInputElement>) => {
     setNewTodoName(e.target.value);
@@ -139,11 +154,13 @@ const App = () => {
       isDone: false,
       priority: newTodoPriority,
       deadline: newTodoDeadline,
+      category: newTodoCategory,
     };
     setTodos((currentTodos) => [...currentTodos, newTodo]);
     setNewTodoName("");
     setNewTodoPriority(3);
     setNewTodoDeadline(null);
+    setNewTodoCategory("その他");
     setIsNameTouched(false);
   };
 
@@ -242,46 +259,79 @@ const App = () => {
 
       {viewMode === "list" ? (
         <>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
-            <div className="flex items-center gap-1">
-              <span className="font-bold text-slate-700">表示:</span>
-              {(
-                [
-                  { label: "すべて", value: "all" },
-                  { label: "未完了", value: "active" },
-                  { label: "完了済み", value: "completed" },
-                ] as const
-              ).map((item) => (
+          <div className="mb-4 space-y-2.5 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-1">
+                <span className="font-bold text-slate-700">状態:</span>
+                {(
+                  [
+                    { label: "すべて", value: "all" },
+                    { label: "未完了", value: "active" },
+                    { label: "完了済み", value: "completed" },
+                  ] as const
+                ).map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setFilter(item.value)}
+                    className={twMerge(
+                      "rounded-md px-2.5 py-1 font-medium transition",
+                      filter === item.value
+                        ? "bg-indigo-600 text-white"
+                        : "bg-white text-slate-600 hover:bg-slate-200",
+                    )}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label htmlFor="sortSelect" className="font-bold text-slate-700">
+                  並び替え:
+                </label>
+                <select
+                  id="sortSelect"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortType)}
+                  className="rounded-md border border-slate-300 bg-white px-2 py-1"
+                >
+                  <option value="createdAt">登録順</option>
+                  <option value="priority">優先度順</option>
+                  <option value="deadline">期限順</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="font-bold text-slate-700">種類:</span>
+              <button
+                type="button"
+                onClick={() => setCategoryFilter("all")}
+                className={twMerge(
+                  "rounded-md px-2.5 py-1 font-medium transition",
+                  categoryFilter === "all"
+                    ? "bg-slate-700 text-white"
+                    : "bg-white text-slate-600 hover:bg-slate-200",
+                )}
+              >
+                すべて
+              </button>
+              {CATEGORIES.map((category) => (
                 <button
-                  key={item.value}
+                  key={category}
                   type="button"
-                  onClick={() => setFilter(item.value)}
+                  onClick={() => setCategoryFilter(category)}
                   className={twMerge(
                     "rounded-md px-2.5 py-1 font-medium transition",
-                    filter === item.value
-                      ? "bg-indigo-600 text-white"
+                    categoryFilter === category
+                      ? "bg-slate-700 text-white"
                       : "bg-white text-slate-600 hover:bg-slate-200",
                   )}
                 >
-                  {item.label}
+                  {category}
                 </button>
               ))}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label htmlFor="sortSelect" className="font-bold text-slate-700">
-                並び替え:
-              </label>
-              <select
-                id="sortSelect"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortType)}
-                className="rounded-md border border-slate-300 bg-white px-2 py-1"
-              >
-                <option value="createdAt">登録順</option>
-                <option value="priority">優先度順</option>
-                <option value="deadline">期限順</option>
-              </select>
             </div>
           </div>
 
@@ -314,7 +364,7 @@ const App = () => {
           addNewTodo();
         }}
         aria-labelledby="newTodoHeading"
-        className="mt-6 space-y-2 rounded-md border border-slate-300 bg-white p-4 drop-shadow"
+        className="mt-6 space-y-3 rounded-md border border-slate-300 bg-white p-4 drop-shadow"
       >
         <h2 id="newTodoHeading" className="text-lg font-bold">
           新しいタスクの追加
@@ -359,10 +409,34 @@ const App = () => {
         </div>
 
         <fieldset>
+          <legend className="mb-1 font-bold">種類</legend>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((category) => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setNewTodoCategory(category)}
+                className={twMerge(
+                  "cursor-pointer rounded-full border px-3 py-1 text-sm font-medium transition",
+                  newTodoCategory === category
+                    ? "border-indigo-600 bg-indigo-600 text-white"
+                    : "border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100",
+                )}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset>
           <legend className="mb-1 font-bold">優先度</legend>
           <div className="flex gap-5">
             {[1, 2, 3].map((value) => (
-              <label key={value} className="flex cursor-pointer items-center space-x-1">
+              <label
+                key={value}
+                className="flex cursor-pointer items-center space-x-1"
+              >
                 <input
                   id={`priority-${value}`}
                   name="priorityGroup"
