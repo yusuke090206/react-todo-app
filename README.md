@@ -13,7 +13,7 @@
 ## スクリーンショット
 
 ### 1. メイン画面（リスト表示）
-<img src="/images/main_src.png" width="400px">  
+<img src="/images/main_scr.png" width="400px">  
 
 
 ### 2. 期限アラート（黄色警告）と期限切れタスクの自動分離（赤枠）
