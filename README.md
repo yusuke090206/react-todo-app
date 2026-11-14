@@ -13,23 +13,23 @@
 ## スクリーンショット
 
 ### 1. メイン画面（リスト表示）
-<img src="/image/main_src.png" width="400px">  
+<img src="/images/main_src.png" width="400px">  
 
 
 ### 2. 期限アラート（黄色警告）と期限切れタスクの自動分離（赤枠）
-<img src="/image/date_alert.png" width="400px">  
+<img src="/images/date_alert.png" width="400px">  
 
 
 ### 3. カレンダー表示
-<img src="/image/calender.png" width="400px">  
+<img src="/images/calender.png" width="400px">  
 
 
 ### 4. 絞り込み・並び替え機能と入力バリデーション
-<img src="/image/filter.png" width="400px">  
+<img src="/images/filter.png" width="400px">  
 
 
 ### 5. スマートフォン表示（レスポンシブ対応）
-<img src="/image/responsive.png" width="400px">  
+<img src="/images/responsive.png" width="400px">  
 
 
 ## 主な機能と工夫したポイント
