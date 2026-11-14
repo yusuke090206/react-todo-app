@@ -2,7 +2,7 @@
 
 期限の迫ったタスクの「見落とし防止」と「スケジュール全体の直感的な把握」を両立したWeb Todoアプリケーションです。
 
-- **公開URL (GitHub Pages)**: https://[ユーザー名].github.io/[リポジトリ名]/
+- **公開URL (GitHub Pages)**: https://yusuke090206.github.io/react-todo-app/
 
 ## 開発の背景・着想
 
@@ -13,10 +13,10 @@
 ## スクリーンショット
 
 ### 1. メイン画面（リスト表示）
-![メイン画面](.images/main_src.png)
+![メイン画面](.images/main_scr.png)
 
 ### 2. 期限アラート（黄色警告）と期限切れタスクの自動分離（赤枠）
-![期限アラート](.images/alers.png)
+![期限アラート](.images/alert.png)
 
 ### 3. カレンダー表示
 ![カレンダー表示](.images/calender.png)
