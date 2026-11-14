@@ -18,7 +18,6 @@ const CalendarView = ({ todos, updateIsDone }: Props) => {
   const startDayOfWeek = startOfMonth.day(); // 0 = 日曜日
   const daysInMonth = currentMonth.daysInMonth();
 
-  // カレンダーグリッド用データ構築
   const calendarCells = [];
   for (let i = 0; i < startDayOfWeek; i++) {
     calendarCells.push(null);
@@ -33,7 +32,6 @@ const CalendarView = ({ todos, updateIsDone }: Props) => {
 
   return (
     <div className="rounded-lg border border-slate-300 bg-white p-4 shadow-sm">
-      {/* カレンダーヘッダー */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold text-slate-800">
           {currentMonth.format("YYYY年 MM月")}
@@ -63,7 +61,6 @@ const CalendarView = ({ todos, updateIsDone }: Props) => {
         </div>
       </div>
 
-      {/* 曜日ヘッダー */}
       <div className="grid grid-cols-7 gap-1 text-center font-bold text-slate-600 mb-2">
         <div className="text-red-500">日</div>
         <div>月</div>
@@ -74,7 +71,6 @@ const CalendarView = ({ todos, updateIsDone }: Props) => {
         <div className="text-blue-500">土</div>
       </div>
 
-      {/* 日付セル */}
       <div className="grid grid-cols-7 gap-1">
         {calendarCells.map((date, index) => {
           if (!date) {
@@ -104,7 +100,6 @@ const CalendarView = ({ todos, updateIsDone }: Props) => {
                 {date.date()}
               </div>
 
-              {/* 日付セル内のタスクリスト */}
               <div className="flex flex-col gap-1">
                 {dayTodos.map((todo) => {
                   const isOverdue =

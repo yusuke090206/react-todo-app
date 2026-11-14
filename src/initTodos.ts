@@ -1,9 +1,9 @@
 import type { Todo } from "./types";
-import { v4 as uuid } from "uuid"; // v4 を uuid という名前でインポート
+import { v4 as uuid } from "uuid"; 
 
 export const initTodos: Todo[] = [
   {
-    id: uuid(), // UUID v4 を生成してIDにセット
+    id: uuid(), 
     name: "解析2の宿題",
     isDone: false,
     priority: 2,
@@ -14,7 +14,7 @@ export const initTodos: Todo[] = [
     name: "TypeScriptの勉強 (復習)",
     isDone: true,
     priority: 3,
-    deadline: null, // このTodoには期限を設定しない
+    deadline: null, 
   },
   {
     id: uuid(),

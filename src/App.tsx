@@ -4,7 +4,7 @@ import type { Todo } from "./types";
 import { initTodos } from "./initTodos";
 import WelcomeMessage from "./WelcomeMessage";
 import TodoList from "./TodoList";
-import CalendarView from "./CalendarView"; // 後述する新規コンポーネント
+import CalendarView from "./CalendarView";
 import { v4 as uuid } from "uuid";
 import { twMerge } from "tailwind-merge";
 import dayjs from "dayjs";
@@ -14,9 +14,11 @@ import {
   faListCheck,
   faCalendarDays,
   faCircleExclamation,
+  faUser,
 } from "@fortawesome/free-solid-svg-icons";
 
 const localStorageKey = "TodoApp";
+const userNameStorageKey = "TodoApp_UserName";
 
 type StoredTodo = {
   id: string;
@@ -52,12 +54,14 @@ const getTodoNameError = (name: string): string => {
 
 const App = () => {
   const [todos, setTodos] = useState<Todo[]>(loadTodos);
+  const [userName, setUserName] = useState<string>(() => {
+    return localStorage.getItem(userNameStorageKey) ?? "寝屋川タヌキ";
+  });
   const [newTodoName, setNewTodoName] = useState("");
   const [newTodoPriority, setNewTodoPriority] = useState(3);
   const [newTodoDeadline, setNewTodoDeadline] = useState<Date | null>(null);
   const [isNameTouched, setIsNameTouched] = useState(false);
 
-  // 表示モード (list: リスト表示, calendar: カレンダー表示)
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [filter, setFilter] = useState<FilterType>("all");
   const [sortBy, setSortBy] = useState<SortType>("createdAt");
@@ -72,7 +76,10 @@ const App = () => {
     localStorage.setItem(localStorageKey, JSON.stringify(todos));
   }, [todos]);
 
-  // 1. 期限切れの未完了タスク（別セクションに分離）
+  useEffect(() => {
+    localStorage.setItem(userNameStorageKey, userName);
+  }, [userName]);
+
   const overdueTodos = useMemo(() => {
     const now = new Date();
     return todos.filter(
@@ -80,7 +87,6 @@ const App = () => {
     );
   }, [todos]);
 
-  // 2. 通常のタスク（期限切れを除く）
   const normalTodos = useMemo(() => {
     const now = new Date();
     return todos.filter(
@@ -89,7 +95,6 @@ const App = () => {
     );
   }, [todos]);
 
-  // フィルター＆ソート（通常タスクに適用）
   const filteredAndSortedTodos = useMemo(() => {
     return normalTodos
       .filter((todo) => {
@@ -164,10 +169,26 @@ const App = () => {
 
   return (
     <div className="mx-4 mt-10 max-w-2xl md:mx-auto">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">TodoApp</h1>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-bold">TodoApp</h1>
 
-        {/* リスト / カレンダー 切替ボタン */}
+          <div className="flex items-center rounded-md border border-slate-300 bg-white px-2.5 py-1 shadow-xs focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500">
+            <FontAwesomeIcon
+              icon={faUser}
+              className="mr-2 text-sm text-slate-400"
+            />
+            <input
+              type="text"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              placeholder="名前を入力"
+              aria-label="ユーザー名"
+              className="w-32 text-sm text-slate-700 outline-none sm:w-40"
+            />
+          </div>
+        </div>
+
         <div className="flex rounded-lg bg-slate-200 p-1">
           <button
             type="button"
@@ -200,12 +221,11 @@ const App = () => {
 
       <div className="mb-4">
         <WelcomeMessage
-          name="ゲスト"
+          name={userName.trim() === "" ? "ゲスト" : userName.trim()}
           uncompletedCount={uncompletedCount}
         />
       </div>
 
-      {/* 🚨 期限切れタスクの特別セクション（存在する場合のみ表示） */}
       {overdueTodos.length > 0 && (
         <div className="mb-6 rounded-lg border border-red-300 bg-red-50 p-4 shadow-sm">
           <h2 className="mb-3 flex items-center gap-2 font-bold text-red-700">
@@ -220,10 +240,8 @@ const App = () => {
         </div>
       )}
 
-      {/* 表示モードに応じたメインコンテンツ */}
       {viewMode === "list" ? (
         <>
-          {/* コントロールバー */}
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
             <div className="flex items-center gap-1">
               <span className="font-bold text-slate-700">表示:</span>
@@ -287,11 +305,9 @@ const App = () => {
           </button>
         </>
       ) : (
-        /* カレンダービュー */
         <CalendarView todos={todos} updateIsDone={updateIsDone} />
       )}
 
-      {/* タスク追加フォーム */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -346,7 +362,7 @@ const App = () => {
           <legend className="mb-1 font-bold">優先度</legend>
           <div className="flex gap-5">
             {[1, 2, 3].map((value) => (
-              <label key={value} className="flex items-center space-x-1 cursor-pointer">
+              <label key={value} className="flex cursor-pointer items-center space-x-1">
                 <input
                   id={`priority-${value}`}
                   name="priorityGroup"

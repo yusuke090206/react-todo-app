@@ -21,8 +21,7 @@ const formattedDate = (date: Date) => {
 
 const TodoItem = (props: Props) => {
   const todo = props.todo;
-
-  // 期限切れ判定（未完了かつ期限が過去の日時）
+  
   const isOverdue =
     !todo.isDone && todo.deadline !== null && todo.deadline.getTime() < Date.now();
 
